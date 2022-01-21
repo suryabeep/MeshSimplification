@@ -79,3 +79,35 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
 
     return textureID;
 }
+
+// simple OBJ file loader modified from http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
+bool loadObj (const char * path, std::vector < glm::vec3 > & out_vertices, std::vector < glm::ivec3 > & out_faces) {
+    FILE* file = fopen(path, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open the file! \n");
+        return false;
+    }
+
+    // read line by line until EOF
+    while (true) {
+        char lineHeader[128];
+        int res = fscanf(file, "%s", lineHeader);
+        if (res == EOF) {
+            break;
+        }
+
+        if (strcmp(lineHeader, "v") == 0) {
+            glm::vec3 vertex;
+            fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+            out_vertices.push_back(vertex);
+        }
+        else if (strcmp(lineHeader, "f") == 0) {
+            glm::ivec3 face;
+            fscanf(file, "%d %d %d\n", &face.x, &face.y, &face.z);
+            // adjust indexing
+            face -= glm::ivec3(1, 1, 1);
+            out_faces.push_back(face);
+        }
+    }
+    return true;
+}

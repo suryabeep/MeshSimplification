@@ -1,12 +1,12 @@
 CFLAGS = -std=c++17
-LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lcurand
+LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 
 .PHONY: main
 
 all: main
 
 main:
-	nvcc $(CFLAGS) convolution.cu main.cpp glad.c -o main $(LDFLAGS)
+	g++ $(CFLAGS) main.cpp glad.c -o main $(LDFLAGS)
 
 .PHONY: clean
 
