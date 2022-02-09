@@ -60,9 +60,10 @@ int main()
         processInput(window);
         // bootleg testing
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            fprintf(stderr, "Pressed up, attempting to collapse mesh!\n");
-            for(int i = 0; i < 1000; i++) 
-                model->collapseMesh();
+            //fprintf(stderr, "Pressed up, attempting to collapse mesh!\n");
+            //for(int i = 0; i < 1000; i++) 
+            // model->collapseMesh();
+            model->collapseMeshQEM();
         }
 
         glClearColor(0.82, 0.93, 0.99, 1.0f);
