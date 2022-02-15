@@ -111,3 +111,66 @@ bool loadObj (const char * path, std::vector < glm::vec3 > & out_vertices, std::
     }
     return true;
 }
+
+// math from https://math.stackexchange.com/a/2686620
+glm::vec4 computePlaneCoeffs(glm::vec3 a, glm::vec3 b, glm::vec3 c) {
+    glm::vec3 first_3 = glm::cross(b - a, c - a);
+    float k = -glm::dot(first_3, a);
+    return glm::vec4(first_3, k);
+}
+
+bool loadObj (const char* path, std::vector<glm::vec3> &out_vertices, std::vector<glm::ivec3> &out_faces, std::vector<glm::vec3> &out_normals) {
+    FILE* file = fopen(path, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open the file! \n");
+        return false;
+    }
+
+    bool normalsInFile = false;
+
+    // read line by line until EOF
+    while (true) {
+        char lineHeader[128];
+        int res = fscanf(file, "%s", lineHeader);
+        if (res == EOF) {
+            break;
+        }
+
+        if (strcmp(lineHeader, "v") == 0) {
+            glm::vec3 vertex;
+            fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+            out_vertices.push_back(vertex);
+        }
+        else if (strcmp(lineHeader, "f") == 0) {
+            glm::ivec3 face;
+            fscanf(file, "%d %d %d\n", &face.x, &face.y, &face.z);
+            // adjust indexing
+            face -= glm::ivec3(1, 1, 1);
+            out_faces.push_back(face);
+        }
+        else if (strcmp(lineHeader, "vn") == 0) {
+            normalsInFile = true;
+            glm::vec3 normal;
+            fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+            out_normals.push_back(normal);
+        }
+    }
+
+    if (!normalsInFile) {
+        // have to compute normals manually
+        out_normals.resize(out_vertices.size(), glm::vec3(0.0f));
+        for (size_t i = 0; i < out_faces.size(); i++) {
+            glm::ivec3 face = out_faces[i];
+            glm::vec3 normal = glm::cross(out_vertices[face[1]] - out_vertices[face[0]], 
+                                        out_vertices[face[2]] - out_vertices[face[0]]);
+            out_normals[face[0]] += normal;
+            out_normals[face[1]] += normal;
+            out_normals[face[2]] += normal;
+        }
+        for (size_t i = 0; i < out_normals.size(); i++) {
+            out_normals[i] = glm::normalize(out_normals[i]);
+        }
+    }
+
+    return true;
+}

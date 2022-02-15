@@ -34,13 +34,15 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+// wireframe mode
+bool wireframe = false;
+
 int main()
 {
     GLFWwindow* window = initWindow();
 
     glEnable(GL_DEPTH_TEST);
-    // Turn on wireframe mode
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
 
     Shader *basicShader = new Shader("shaders/basic.vert", "shaders/basic.frag");
     Model *model = new Model("teapot.obj");
@@ -52,6 +54,8 @@ int main()
     glm::mat4 view;
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
+    glm::vec3 lightPos{1.0f, 2.0f, 1.0f};
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -60,9 +64,7 @@ int main()
         processInput(window);
         // bootleg testing
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            //fprintf(stderr, "Pressed up, attempting to collapse mesh!\n");
-            //for(int i = 0; i < 1000; i++) 
-            // model->collapseMesh();
+            fprintf(stderr, "Pressed up, attempting to collapse mesh!\n");
             model->collapseMeshQEM();
         }
 
@@ -70,11 +72,20 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         view = camera.GetViewMatrix();
+        glm::vec3 camPos = camera.Position;
+
+        glm::mat4 modelView = view * modelMat;
+        glm::mat4 normalMatrix = glm::inverse(glm::transpose(modelView));
 
         basicShader->use();
+
         basicShader->setMat4("model", modelMat);
-        basicShader->setMat4("projection", projection);
         basicShader->setMat4("view", view);
+        basicShader->setMat4("projection", projection);
+        basicShader->setMat4("normalMatrix", normalMatrix);
+
+        basicShader->setVec3("lightPos", lightPos);
+        basicShader->setVec3("eyePos", camPos);
 
         // Draw the model
         model->draw();
@@ -112,6 +123,11 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(RIGHT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         fprintf(stderr, "Camera position: %f, %f, %f\nCamera yaw, pitch: %f, %f\n", camera.Position.x, camera.Position.y, camera.Position.z, camera.Yaw, camera.Pitch);
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+        // Toggle wireframe mode
+        glPolygonMode( GL_FRONT_AND_BACK, wireframe ? GL_LINE :  GL_FILL);
+        wireframe = !wireframe;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
